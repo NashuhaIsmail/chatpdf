@@ -14,8 +14,7 @@ from langchain.memory import ConversationBufferMemory
 from streamlit_chat import message
 from langchain.callbacks import get_openai_callback
 
-# Define your API key here
-OPENAI_API_KEY = ""
+
 
 def main():
     load_dotenv()
@@ -32,17 +31,17 @@ def main():
 
     with st.sidebar:
         uploaded_files =  st.file_uploader("Upload your file",type=['pdf','docx'],accept_multiple_files=True)
-        # openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
+        openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
         process = st.button("Process")
     if process:
-        if not OPENAI_API_KEY:
+        if not openai_api_key:
             st.info("Please add your OpenAI API key to continue.")
             st.stop()
         files_text = get_files_text(uploaded_files)
         text_chunks = get_text_chunks(files_text)
         vetorestore = get_vectorstore(text_chunks)
      
-        st.session_state.conversation = get_conversation_chain(vetorestore, OPENAI_API_KEY) 
+        st.session_state.conversation = get_conversation_chain(vetorestore,openai_api_key) 
 
         st.session_state.processComplete = True
 
@@ -50,6 +49,10 @@ def main():
         user_question = st.chat_input("Chat with your file")
         if user_question:
             handel_userinput(user_question)
+
+
+
+
 
 def get_files_text(uploaded_files):
     text = ""
@@ -63,6 +66,7 @@ def get_files_text(uploaded_files):
         else:
             text += get_csv_text(uploaded_file)
     return text
+
 
 def get_pdf_text(pdf):
     pdf_reader = PdfReader(pdf)
@@ -92,13 +96,14 @@ def get_text_chunks(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
+
 def get_vectorstore(text_chunks):
     embeddings = HuggingFaceEmbeddings()
-    knowledge_base = FAISS.from_texts(text_chunks, embeddings)
+    knowledge_base = FAISS.from_texts(text_chunks,embeddings)
     return knowledge_base
 
-def get_conversation_chain(vetorestore, openai_api_key):
-    llm = ChatOpenAI(openai_api_key=openai_api_key, model_name='gpt-3.5-turbo', temperature=0)
+def get_conversation_chain(vetorestore,openai_api_key):
+    llm = ChatOpenAI(openai_api_key=openai_api_key, model_name = 'gpt-3.5-turbo',temperature=0)
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
@@ -109,8 +114,9 @@ def get_conversation_chain(vetorestore, openai_api_key):
 
 # This function takes a user question as input, sends it to a conversation model and displays the conversation history along with some additional information.
 def handel_userinput(user_question):
+
     with get_openai_callback() as cb:
-        response = st.session_state.conversation({'question': user_question})
+        response = st.session_state.conversation({'question':user_question})
     st.session_state.chat_history = response['chat_history']
 
     response_container = st.container()
@@ -122,6 +128,9 @@ def handel_userinput(user_question):
             else:
                 message(messages.content, key=str(i))
         st.write(f"Total Tokens: {cb.total_tokens}" f", Prompt Tokens: {cb.prompt_tokens}" f", Completion Tokens: {cb.completion_tokens}" f", Total Cost (USD): ${cb.total_cost}")
+
+
+
 
 if __name__ == '__main__':
     main()
