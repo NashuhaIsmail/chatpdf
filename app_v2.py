@@ -17,7 +17,14 @@ from langchain.memory import ConversationBufferMemory
 from streamlit_chat import message
 from langchain.callbacks import get_openai_callback
 
-nlp = spacy.load("en_core_web_sm")
+ Ensure the SpaCy model is downloaded and loaded
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    # Model not found, download it
+    from spacy.cli import download
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 
 def main():
     load_dotenv()
