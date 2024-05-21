@@ -4,6 +4,8 @@ import os
 import pandas as pd
 from PyPDF2 import PdfReader
 import docx
+import spacy
+from spacy import displacy
 from langchain.chat_models import ChatOpenAI
 from langchain.llms import OpenAI
 from dotenv import load_dotenv
@@ -15,12 +17,13 @@ from langchain.memory import ConversationBufferMemory
 from streamlit_chat import message
 from langchain.callbacks import get_openai_callback
 
+nlp = spacy.load("en_core_web_sm")
+
 def main():
     load_dotenv()
     st.set_page_config(page_title="Chat With files")
     st.header("ChatPDF developed by Nesa Ismail")
-    #image = Image.open("C:\\Users\\nesa.nashuha\\OneDrive - Habib Jewels Sdn Bhd\\Business Unit\\MC Project\\Marketplace Scraper\\Streamlit\\Exabytes\\Habib-jewels-Logo-Vector.jpg")
-    #st.sidebar.image(image)
+    
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
@@ -29,9 +32,10 @@ def main():
         st.session_state.processComplete = None
 
     with st.sidebar:
-        uploaded_files =  st.file_uploader("Upload your file", type=['pdf', 'docx', 'csv'], accept_multiple_files=True)
+        uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'docx', 'csv'], accept_multiple_files=True)
         openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
         process = st.button("Process")
+
     if process:
         if not openai_api_key:
             st.info("Please add your OpenAI API key to continue.")
@@ -39,12 +43,14 @@ def main():
         files_text = get_files_text(uploaded_files)
         text_chunks = get_text_chunks(files_text)
         vectorstore = get_vectorstore(text_chunks)
-     
-        st.session_state.conversation = get_conversation_chain(vectorstore, openai_api_key) 
-
+        
+        st.session_state.conversation = get_conversation_chain(vectorstore, openai_api_key)
         st.session_state.processComplete = True
+        st.session_state.highlighted_text = highlight_facts(files_text)
 
     if st.session_state.processComplete:
+        st.subheader("Highlighted Facts")
+        st.markdown(st.session_state.highlighted_text, unsafe_allow_html=True)
         user_question = st.chat_input("Chat with your file")
         if user_question:
             handle_userinput(user_question)
@@ -71,11 +77,8 @@ def get_pdf_text(pdf):
 
 def get_docx_text(file):
     doc = docx.Document(file)
-    allText = []
-    for docpara in doc.paragraphs:
-        allText.append(docpara.text)
-    text = ' '.join(allText)
-    return text
+    allText = [para.text for para in doc.paragraphs]
+    return ' '.join(allText)
 
 def get_csv_text(file):
     try:
@@ -129,5 +132,12 @@ def handle_userinput(user_question):
     except Exception as e:
         st.error(f"Error handling user input: {e}")
 
+def highlight_facts(text):
+    doc = nlp(text)
+    options = {"ents": ["PERSON", "ORG", "GPE", "DATE", "TIME", "MONEY", "PERCENT"], "colors": {"PERSON": "linear-gradient(90deg, #aa9cfc, #fc9ce7)", "ORG": "linear-gradient(90deg, #fca9fc, #fc9c9c)"}}
+    html = displacy.render(doc, style="ent", options=options, jupyter=False)
+    return html
+
 if __name__ == '__main__':
     main()
+
