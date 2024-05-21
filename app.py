@@ -15,7 +15,7 @@ from streamlit_chat import message
 from langchain.callbacks import get_openai_callback
 
 # Define your API key here
-OPENAI_API_KEY = "sk-proj-EBdo1KqETOhcVHFHq6utT3BlbkFJocItnKI23mMPkT3Pvvvo"
+OPENAI_API_KEY = "sk-proj-qtkoDPyI9kjIv6fUPWyhT3BlbkFJtE4D34TGsQ0Hmhky4FTR"
 
 def main():
     load_dotenv()
