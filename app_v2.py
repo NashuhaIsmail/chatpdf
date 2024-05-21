@@ -18,7 +18,7 @@ from langchain.callbacks import get_openai_callback
 def main():
     load_dotenv()
     st.set_page_config(page_title="Chat With files")
-    #st.header("Chat with documents developed by Nesa Ismail")
+    st.header("Chat with file developed by Nesa Ismail")
     #image = Image.open("C:\\Users\\nesa.nashuha\\OneDrive - Habib Jewels Sdn Bhd\\Business Unit\\MC Project\\Marketplace Scraper\\Streamlit\\Exabytes\\Habib-jewels-Logo-Vector.jpg")
     #st.sidebar.image(image)
     if "conversation" not in st.session_state:
